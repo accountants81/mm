@@ -1,0 +1,202 @@
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap");
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --color-sidebar: hsl(var(--sidebar));
+  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
+  --color-sidebar-primary: hsl(var(--sidebar-primary));
+  --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
+  --color-sidebar-accent: hsl(var(--sidebar-accent));
+  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
+  --color-sidebar-border: hsl(var(--sidebar-border));
+  --color-sidebar-ring: hsl(var(--sidebar-ring));
+}
+
+:root {
+  --primary: 0 67% 47%;
+  --primary-foreground: 36 33% 97%;
+  --sidebar-primary: 0 67% 47%;
+  --sidebar-primary-foreground: 36 33% 97%;
+  --background: 0 8% 6%;
+  --foreground: 34 24% 92%;
+  --card: 0 7% 10%;
+  --card-foreground: 34 24% 92%;
+  --popover: 0 8% 12%;
+  --popover-foreground: 34 24% 92%;
+  --secondary: 0 8% 15%;
+  --secondary-foreground: 30 11% 76%;
+  --muted: 0 7% 14%;
+  --muted-foreground: 0 4% 58%;
+  --accent: 35 55% 67%;
+  --accent-foreground: 0 10% 8%;
+  --destructive: 0 58% 48%;
+  --destructive-foreground: 36 33% 97%;
+  --border: 0 9% 23%;
+  --input: 0 9% 23%;
+  --ring: 0 70% 58%;
+  --chart-1: 0 70% 52%;
+  --chart-2: 35 55% 67%;
+  --chart-3: 13 48% 61%;
+  --chart-4: 0 58% 45%;
+  --chart-5: 23 44% 60%;
+  --sidebar: 0 10% 5%;
+  --sidebar-foreground: 34 24% 90%;
+  --sidebar-accent: 0 8% 12%;
+  --sidebar-accent-foreground: 34 24% 94%;
+  --sidebar-border: 0 9% 18%;
+  --sidebar-ring: 0 70% 58%;
+  --radius: 0.65rem;
+}
+
+.dark {
+  --background: 0 8% 6%;
+  --foreground: 34 24% 92%;
+  --card: 0 7% 10%;
+  --card-foreground: 34 24% 92%;
+  --popover: 0 8% 12%;
+  --popover-foreground: 34 24% 92%;
+  --secondary: 0 8% 15%;
+  --secondary-foreground: 30 11% 76%;
+  --muted: 0 7% 14%;
+  --muted-foreground: 0 4% 58%;
+  --accent: 35 55% 67%;
+  --accent-foreground: 0 10% 8%;
+  --border: 0 9% 23%;
+  --input: 0 9% 23%;
+}
+
+html, body, #root {
+  width: 100%;
+  max-width: 100%;
+  min-height: 100%;
+  overflow-x: hidden;
+}
+
+@layer base {
+  * { @apply border-border outline-ring/50; }
+  html { font-family: "Noto Sans Arabic", Tahoma, sans-serif; }
+  body {
+    @apply bg-background text-foreground;
+    background-color: #100e0e;
+    color: #eee8de;
+    font-feature-settings: "kern", "liga";
+  }
+  ::selection { background: rgba(165, 30, 37, .38); color: #fff5df; }
+  button:not(:disabled), [role="button"]:not([aria-disabled="true"]),
+  [type="button"]:not(:disabled), [type="submit"]:not(:disabled),
+  [type="reset"]:not(:disabled), a[href], select:not(:disabled),
+  input[type="checkbox"]:not(:disabled), input[type="radio"]:not(:disabled) {
+    @apply cursor-pointer;
+  }
+}
+
+@layer components {
+  .container {
+    width: 100%; margin-inline: auto; padding-inline: 1rem;
+  }
+  .accounting-shell {
+    min-height: 100dvh;
+    background:
+      radial-gradient(circle at 8% 0%, rgba(150, 24, 31, .18), transparent 28rem),
+      radial-gradient(circle at 100% 25%, rgba(109, 22, 29, .14), transparent 24rem),
+      linear-gradient(120deg, rgba(255,255,255,.018) 1px, transparent 1px),
+      #100e0e;
+    background-size: auto, auto, 52px 52px, auto;
+  }
+  .accounting-glass {
+    border: 1px solid rgba(228, 218, 203, .12);
+    background: linear-gradient(145deg, rgba(35, 27, 28, .96), rgba(20, 17, 18, .98));
+    box-shadow: 0 22px 70px rgba(3, 2, 2, .42), inset 0 1px 0 rgba(255,255,255,.055);
+    backdrop-filter: blur(16px);
+  }
+  .accounting-card {
+    transition: transform 180ms cubic-bezier(.23,1,.32,1), border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
+  }
+  .accounting-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(195, 49, 56, .5);
+    box-shadow: 0 18px 42px rgba(3, 2, 2, .38);
+  }
+  .accounting-mono { font-family: "Space Grotesk", ui-monospace, monospace; direction: ltr; }
+  .accounting-shell input, .accounting-shell select, .accounting-shell textarea {
+    color-scheme: dark;
+  }
+  .accounting-shell ::placeholder { color: rgba(211, 202, 193, .42); }
+  .accounting-shell :focus-visible { outline: 2px solid rgba(205, 51, 58, .75); outline-offset: 2px; }
+  button, a { transition-timing-function: cubic-bezier(.23,1,.32,1); }
+  button:active, a:active { transform: scale(.98); }
+
+  /* Re-map the legacy utility colors to the ledger palette. */
+  [class*="bg-[#07111f]"], [class*="bg-[#091525]"], [class*="bg-[#13243e]"],
+  [class*="bg-[#101b31]"], [class*="bg-[#1d1638]"] { background-color: #100e0e !important; }
+  .accounting-shell .bg-red-500, .accounting-shell .bg-red-600,
+  .accounting-shell .bg-cyan-300, .accounting-shell .bg-cyan-400 {
+    background-color: #a51e25 !important;
+  }
+  [class*="bg-red-"], [class*="bg-cyan-"] {
+    background-color: rgba(165, 30, 37, .14) !important;
+  }
+  [class*="bg-[#110d12]"], [class*="bg-[#151517]"], [class*="bg-[#151114]"],
+  [class*="bg-[#171214]"], [class*="bg-[#1b1618]"], [class*="bg-[#211c1f]"] {
+    background-color: #241b1d !important;
+  }
+  .accounting-shell .hover\:bg-red-400:hover, .accounting-shell .hover\:bg-red-500:hover,
+  .accounting-shell .hover\:bg-cyan-300:hover { background-color: #c33239 !important; }
+  [class*="text-red-"], [class*="text-cyan-"] { color: #dc6a6d !important; }
+  [class*="text-emerald-"] { color: #9bc9a7 !important; }
+  [class*="text-amber-"] { color: #e2c78f !important; }
+  [class*="text-rose-"] { color: #df9695 !important; }
+  [class*="text-blue-"], [class*="text-indigo-"] { color: #b9c8d5 !important; }
+  [class*="text-violet-"], [class*="text-purple-"] { color: #cdbcc4 !important; }
+  [class*="border-red-"], [class*="border-cyan-"] { border-color: rgba(194, 50, 57, .38) !important; }
+  [class*="border-emerald-"] { border-color: rgba(155, 201, 167, .3) !important; }
+  [class*="border-amber-"] { border-color: rgba(226, 199, 143, .3) !important; }
+  [class*="border-rose-"] { border-color: rgba(223, 150, 149, .3) !important; }
+  [class*="bg-gradient-"] {
+    background-image: linear-gradient(135deg, rgba(165, 30, 37, .22), rgba(191, 143, 91, .08)) !important;
+  }
+  [class*="shadow-cyan-"], [class*="shadow-blue-"], [class*="shadow-violet-"],
+  [class*="shadow-emerald-"] { box-shadow: 0 20px 60px rgba(3, 2, 2, .36) !important; }
+}
+
+@layer utilities {
+  .font-display { font-family: "Space Grotesk", "Noto Sans Arabic", sans-serif; }
+  .ledger-rule { position: relative; }
+  .ledger-rule::after { content: ""; position: absolute; inset-inline: 0; bottom: -1px; height: 1px; background: linear-gradient(90deg, transparent, rgba(190, 43, 49, .65), transparent); }
+}
+
+@media (min-width: 640px) {
+  .container { padding-inline: 1.5rem; }
+}
+@media (min-width: 1024px) {
+  .container { max-width: 1280px; padding-inline: 2rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}

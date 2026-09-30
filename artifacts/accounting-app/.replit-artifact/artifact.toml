@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "نظام المحاسبة وربط QR"
+description = "نظام محاسبة وإدارة تشغيلية محلي يعمل دون اتصال، مع إدارة الأقسام والأصناف والموظفين وربط سجلاتهم بأكواد QR قابلة للطباعة."
+version = "1.0.0"
+id = "artifacts/accounting-app"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 19080
+
+[services.development]
+run = "pnpm --filter @workspace/accounting-app run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/accounting-app", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/accounting-app/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "19080"
+BASE_PATH = "/"

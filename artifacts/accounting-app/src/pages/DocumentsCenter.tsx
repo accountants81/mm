@@ -1,0 +1,25 @@
+import { FileDown, Printer, RefreshCcw } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import LocalLink from "@/components/LocalLink";
+import { localList, type StoreName } from "@/lib/localDb";
+
+type ReportKind = { store: StoreName; label: string; description: string };
+const reportKinds: ReportKind[] = [
+  { store: "invoices", label: "الفواتير", description: "فواتير البيع والشراء والمرتجعات" },
+  { store: "budgets", label: "الميزانيات", description: "بنود الميزانية التقديرية" },
+  { store: "taxReturns", label: "الإقرارات الضريبية", description: "الفترات والأوعية وقيم الضرائب" },
+  { store: "financialAnalysis", label: "الدراسات والتحليل المالي", description: "دراسات الربحية والسيولة والمؤشرات" },
+  { store: "customReports", label: "القرارات والتقارير المخصصة", description: "قوالب الدراسات والقرارات التي أدخلتها" },
+  { store: "monthlyReports", label: "التقارير الشهرية", description: "ملخصات الأشهر والأرصدة" },
+];
+
+type Row = Record<string, unknown>;
+export default function DocumentsCenter() {
+  const [selected, setSelected] = useState<ReportKind>(reportKinds[0]);
+  const [rows, setRows] = useState<Row[]>([]);
+  const [loading, setLoading] = useState(false);
+  const load = async () => { setLoading(true); setRows(await localList(selected.store) as Row[]); setLoading(false); };
+  useEffect(() => { void load(); }, [selected.store]);
+  const columns = useMemo(() => Array.from(new Set(rows.flatMap(row => Object.keys(row).filter(key => !["id", "updatedAt"].includes(key))))).slice(0, 16), [rows]);
+  return <div dir="rtl" className="min-h-screen bg-[#07111f] px-4 py-8 text-slate-100 lg:px-10 print:bg-white print:p-0 print:text-black"><div className="mx-auto max-w-7xl"><div className="mb-6 flex flex-wrap items-center justify-between gap-3 print:hidden"><LocalLink href="/" className="text-sm text-cyan-300">العودة للوحة التحكم</LocalLink><div className="flex gap-2"><button onClick={() => void load()} className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2 text-sm hover:bg-white/10"><RefreshCcw className="h-4 w-4" /> تحديث</button><button onClick={() => window.print()} className="inline-flex items-center gap-2 rounded-xl bg-cyan-300 px-4 py-2 text-sm font-black text-slate-950"><Printer className="h-4 w-4" /> طباعة / حفظ PDF</button></div></div><header className="rounded-3xl border border-cyan-300/15 bg-gradient-to-l from-cyan-400/10 via-slate-900 to-violet-400/10 p-6 print:border-black print:bg-white"><p className="text-sm font-semibold text-cyan-300 print:text-black">مركز المستندات والتقارير</p><h1 className="mt-2 text-3xl font-black">إصدار وطباعة المستندات المالية</h1><p className="mt-3 max-w-3xl text-sm leading-7 text-slate-300 print:text-black">اختر مصدرًا محليًا لمعاينة البيانات الموجودة فعليًا في النظام ثم استخدم «طباعة / حفظ PDF» من نافذة الطباعة. لا ينشئ المركز أرقامًا أو قرارات وهمية؛ بل يطبع السجلات التي أدخلتها أو استوردتها.</p></header><div className="mt-6 grid gap-5 lg:grid-cols-[280px_1fr]"><aside className="space-y-2 print:hidden">{reportKinds.map(kind => <button key={kind.store} onClick={() => setSelected(kind)} className={`w-full rounded-2xl border p-4 text-right transition ${selected.store === kind.store ? "border-cyan-300/40 bg-cyan-300/10" : "border-white/10 bg-white/[0.04] hover:bg-white/[0.08]"}`}><strong className="block text-sm">{kind.label}</strong><span className="mt-1 block text-xs text-slate-400">{kind.description}</span></button>)}</aside><section className="min-w-0 rounded-3xl border border-white/10 bg-white/[0.04] p-5 print:border-black print:bg-white"><div className="mb-5 flex flex-wrap items-end justify-between gap-3"><div><h2 className="text-2xl font-black">{selected.label}</h2><p className="mt-1 text-sm text-slate-400 print:text-black">{selected.description}</p></div><div className="text-sm text-cyan-200 print:text-black">{rows.length.toLocaleString("ar-EG")} سجل</div></div>{loading ? <p className="p-12 text-center text-slate-400">جارٍ تحميل البيانات...</p> : rows.length === 0 ? <div className="rounded-2xl border border-dashed border-white/15 p-12 text-center text-slate-400 print:text-black">لا توجد سجلات فعلية في هذا القسم بعد. أضف البيانات من صفحة القسم ثم عد إلى هنا لإصدار المستند.</div> : <div className="overflow-x-auto"><table className="min-w-full text-right text-sm"><thead><tr className="border-b border-white/10 print:border-black">{columns.map(column => <th key={column} className="whitespace-nowrap px-3 py-3 text-cyan-200 print:text-black">{column}</th>)}</tr></thead><tbody>{rows.map((row, index) => <tr key={String(row.id ?? index)} className="border-b border-white/5 print:border-black">{columns.map(column => <td key={column} className="max-w-[260px] whitespace-pre-wrap px-3 py-3 align-top text-slate-300 print:text-black">{String(row[column] ?? "-")}</td>)}</tr>)}</tbody></table></div>}</section></div><footer className="mt-6 text-xs text-slate-500 print:text-black">عبد العزيز عمران للمحاسبة القانونية — مستند صادر من البيانات المحلية على الجهاز.</footer></div></div>;
+}

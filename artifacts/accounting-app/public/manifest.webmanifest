@@ -1,0 +1,26 @@
+{
+  "name": "عبد العزيز عمران للمحاسبة القانونية",
+  "short_name": "محاسبة عبد العزيز",
+  "description": "نظام محاسبي عربي للمصانع يعمل محليًا",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#07111f",
+  "theme_color": "#07111f",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

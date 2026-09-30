@@ -1,0 +1,55 @@
+import assert from "node:assert/strict";
+import { chromium } from "@playwright/test";
+const base = process.env.URJD_BASE_URL ?? "http://127.0.0.1:22636";
+const browser = await chromium.launch({ headless: true, executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH, args: ["--no-sandbox", "--disable-gpu"] });
+const context = await browser.newContext({ serviceWorkers: "block" });
+const page = await context.newPage();
+let prompts = 0;
+let nextQr = "MANAGER";
+page.on("dialog", async dialog => { prompts++; await dialog.accept(nextQr); });
+async function login(email, password) {
+  await page.goto(`${base}/local-access`, { waitUntil: "domcontentloaded" });
+  await page.getByTestId("input-local-email").fill(email);
+  await page.getByTestId("input-local-password").fill(password);
+  await page.getByTestId("button-local-login").click();
+  await page.waitForTimeout(500);
+  if (page.url().endsWith("/local-access")) throw new Error(`Login failed: ${await page.locator("body").innerText()}`);
+}
+try {
+  await login("AAO818@gmail.com", "AAO818");
+  assert.equal(prompts, 0, "Unified manager was incorrectly asked for QR");
+  await page.goto(`${base}/section/users`, { waitUntil: "domcontentloaded" });
+  await page.getByTestId("button-add-record").click();
+  const d = page.getByRole("dialog");
+  await d.getByLabel("اسم المستخدم *").fill("مدير شركة QA");
+  await d.getByLabel("البريد الإلكتروني *").fill("company.manager.qa@example.com");
+  await d.getByLabel("كلمة المرور *").fill("CompanyManager123!");
+  await d.locator("select").nth(0).selectOption({ label: "مدير" });
+  await d.getByLabel("كود QR الموظف *").fill("COMPANY-MANAGER-QA");
+  await d.getByLabel("تاريخ انتهاء الصلاحية").fill("2027-12-31");
+  await d.getByLabel("الحد الأقصى للأجهزة").fill("1");
+  await d.getByLabel("الحد الأقصى للمحاولات").fill("5");
+  await d.getByLabel("المحاولات المستخدمة").fill("0");
+  await d.getByLabel("عدد مرات الدخول المسموح *").fill("10");
+  await d.getByLabel("عدد مرات الدخول *").fill("0");
+  await d.getByLabel("آخر تسجيل دخول").fill("2026-09-05");
+  await d.locator("select").nth(1).selectOption({ label: "نشط" });
+  await d.getByRole("button", { name: /إضافة المستخدمون والصلاحيات/ }).click();
+  await page.waitForTimeout(250);
+  assert.ok((await page.locator("body").innerText()).includes("company.manager.qa@example.com"));
+  await page.evaluate(() => { localStorage.removeItem("local-active-user-id"); localStorage.removeItem("local-active-user-email"); localStorage.removeItem("local-active-role"); localStorage.removeItem("local-company-manager-authorized"); sessionStorage.clear(); });
+  await page.goto(`${base}/local-access`);
+  prompts = 0;
+  nextQr = "COMPANY-MANAGER-QA";
+  await login("company.manager.qa@example.com", "CompanyManager123!");
+  assert.equal(prompts, 1, "Company manager was not asked for QR");
+  await page.evaluate(() => { localStorage.removeItem("local-active-user-id"); localStorage.removeItem("local-active-user-email"); localStorage.removeItem("local-active-role"); localStorage.removeItem("local-company-manager-authorized"); sessionStorage.clear(); });
+  await page.goto(`${base}/local-access`);
+  await page.goto(`${base}/section/users`, { waitUntil: "domcontentloaded" }).catch(() => {});
+  nextQr = "MANAGER";
+  await login("AAO818@gmail.com", "AAO818");
+  await page.goto(`${base}/section/users`, { waitUntil: "domcontentloaded" });
+  await page.getByText("company.manager.qa@example.com").locator("xpath=ancestor::tr").getByRole("button", { name: "حذف السجل" }).click();
+  await page.getByTestId("button-confirm-delete").click();
+  console.log(JSON.stringify({ status: "PASS", unifiedManagerQrPrompts: 0, companyManagerQrPrompts: 1, companyManagerLoginWithQr: true }));
+} finally { await browser.close(); }
