@@ -20,7 +20,14 @@ const linkerLibraryDirs = (process.env.NIX_LDFLAGS ?? "")
   .match(/-L\S+/g)
   ?.map(value => value.slice(2))
   .filter((value, index, values) => values.indexOf(value) === index) ?? [];
-const runtimeLibraryDirs = ["libgbm.so.1", "libxkbcommon.so.0", "libasound.so.2"]
+const chromiumLibraries = [
+  "libglib-2.0.so.0", "libgobject-2.0.so.0", "libnspr4.so", "libnss3.so", "libnssutil3.so",
+  "libsmime3.so", "libgio-2.0.so.0", "libatk-1.0.so.0", "libatk-bridge-2.0.so.0",
+  "libdbus-1.so.3", "libcups.so.2", "libxcb.so.1", "libxkbcommon.so.0", "libasound.so.2",
+  "libgbm.so.1", "libX11.so.6", "libXext.so.6", "libcairo.so.2", "libpango-1.0.so.0",
+  "libXcomposite.so.1", "libXdamage.so.1", "libXfixes.so.3", "libXrandr.so.2", "libatspi.so.0",
+];
+const runtimeLibraryDirs = chromiumLibraries
   .map(library => {
     try {
       return execFileSync("find", ["/nix/store", "-maxdepth", "3", "-name", library, "-printf", "%h\\n", "-quit"], { encoding: "utf8" }).trim();
@@ -31,8 +38,8 @@ const runtimeLibraryDirs = ["libgbm.so.1", "libxkbcommon.so.0", "libasound.so.2"
   .filter(Boolean);
 const browser = await chromium.launch({
   headless: true,
-  executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH ?? "/home/runner/workspace/.cache/ms-playwright/chromium-1234/chrome-linux64/chrome",
-  args: ["--disable-gpu", "--no-sandbox"],
+  executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH ?? chromium.executablePath(),
+  args: ["--disable-gpu", "--no-sandbox", "--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream"],
   env: { ...process.env, LD_LIBRARY_PATH: [...new Set([runtimeLibraryDir, ...linkerLibraryDirs, process.env.LD_LIBRARY_PATH].filter(Boolean))].join(":") },
 });
 const context = await browser.newContext({ serviceWorkers: "block", acceptDownloads: true });
@@ -80,6 +87,25 @@ try {
   await installManagerSession(context);
   await page.goto(`${baseUrl}/`, { waitUntil: "domcontentloaded" });
   await page.waitForSelector('[data-testid="link-top-qr"]', { timeout: 5000 });
+
+  await page.goto(`${baseUrl}/qr-generator`, { waitUntil: "domcontentloaded" });
+  await page.waitForSelector('img[alt^="QR Code"]', { timeout: 5000 });
+  const generatorCode = await page.locator('input').first().inputValue();
+  assert.ok(generatorCode.startsWith("QR-"), "QR generator did not create an initial code");
+  const generatorPrint = page.waitForEvent("popup");
+  await page.getByRole("button", { name: "طباعة الكود" }).click();
+  const printPage = await generatorPrint;
+  await printPage.waitForLoadState("domcontentloaded");
+  assert.ok((await printPage.locator("body").innerText()).includes(generatorCode), "QR print window did not contain the generated code");
+  await printPage.close();
+
+  await page.goto(`${baseUrl}/qr-center?autoCamera=0`, { waitUntil: "domcontentloaded" });
+  await page.getByRole("button", { name: "فتح الكاميرا" }).click();
+  await page.waitForSelector("video", { timeout: 5000 });
+  await page.waitForTimeout(700);
+  const cameraState = await page.locator("video").evaluate(video => ({ hasStream: Boolean(video.srcObject), readyState: video.readyState }));
+  assert.ok(cameraState.hasStream || cameraState.readyState >= 1, "Camera preview did not open");
+  await page.getByRole("button", { name: "إيقاف الكاميرا" }).click().catch(() => {});
 
   await page.getByTestId("link-top-qr").click();
   await page.waitForURL(url => url.pathname === "/qr-center" && url.searchParams.get("autoCamera") === "1", { timeout: 5000 });

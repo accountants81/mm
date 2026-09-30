@@ -1,6 +1,7 @@
 import { localList, localPut, type LocalRecord, type StoreName } from "./localDb";
 import { getAttendancePolicy } from "./attendanceEngine";
 import { writeAudit } from "./localAccountingRepository";
+import { sectionDefinitions, storeOrder } from "./accountingFieldDefinitions";
 
 export type QrLink = LocalRecord & {
   qrCode: string;
@@ -10,6 +11,38 @@ export type QrLink = LocalRecord & {
   status: "active" | "inactive";
   isPrimary?: boolean;
 };
+
+const preferredCodeKeys = new Set([
+  "qrcode", "code", "barcode", "employeenumber", "employeecode", "productcode",
+  "assetnumber", "serialnumber", "batchnumber", "tablenumber", "invoicenumber",
+  "invoicencode", "ordernumber", "purchaseordernumber", "salesordernumber",
+  "customercode", "suppliercode", "branchcode", "accountcode", "referencecode",
+]);
+
+function normalized(value: unknown) {
+  return String(value ?? "").trim().toLowerCase();
+}
+
+function recordCodeValues(row: LocalRecord) {
+  return Object.entries(row)
+    .filter(([key, value]) => {
+      if (value === null || value === undefined || typeof value === "object") return false;
+      const keyName = key.replace(/[_\s-]/g, "").toLowerCase();
+      return preferredCodeKeys.has(keyName) || /(?:code|number|barcode|serial|batch|qr|reference|table)/i.test(key);
+    })
+    .map(([, value]) => String(value).trim())
+    .filter(Boolean);
+}
+
+/** All user-facing operational sections can participate in QR relations. */
+export const qrTargetStores: StoreName[] = [
+  ...storeOrder,
+  ...(["qrLinks", "qrScans"] as StoreName[]),
+].filter((store, index, stores) => stores.indexOf(store) === index);
+
+export function qrTargetLabel(store: StoreName) {
+  return sectionDefinitions[store]?.label ?? store;
+}
 
 function activeOwnerId() {
   if (typeof window === "undefined") return "";
@@ -48,15 +81,28 @@ export async function linkQrCode(input: Omit<QrLink, "id" | "updatedAt" | "statu
 export async function resolveQrTarget(qrCode: string) {
   const link = await findQrLink(qrCode);
   if (link) return link;
-  const stores: StoreName[] = ["employees", "products", "contacts", "fixedAssets", "branches", "salesRepresentatives", "restaurantTables", "posOrders", "deliveryOrders"];
-  for (const store of stores) {
-    const rows = await localList<LocalRecord>(store);
-    const match = rows.filter(canReadRow).find((row) => [row.qrCode, row.code, row.barcode, row.employeeNumber, row.productCode, row.assetNumber, row.serialNumber, row.batchNumber, row.tableNumber].some((value) => String(value ?? "").trim().toLowerCase() === qrCode.trim().toLowerCase()));
-    if (match) {
-      return { id: `derived-${store}-${match.id}`, qrCode, targetStore: store, targetId: match.id, targetLabel: String(match.name ?? match.label ?? match.code ?? "سجل"), status: "active" } as QrLink;
-    }
+  const wanted = normalized(qrCode);
+  for (const store of qrTargetStores) {
+    const match = await findQrTargetInStore(wanted, store);
+    if (match) return match;
   }
   return null;
+}
+
+export async function findQrTargetInStore(qrCode: string, store: StoreName) {
+  const wanted = normalized(qrCode);
+  if (!wanted) return null;
+  const rows = await localList<LocalRecord>(store);
+  const match = rows.filter(canReadRow).find((row) => recordCodeValues(row).some(value => normalized(value) === wanted));
+  if (!match) return null;
+  return {
+    id: `derived-${store}-${match.id}`,
+    qrCode,
+    targetStore: store,
+    targetId: match.id,
+    targetLabel: String(match.name ?? match.label ?? match.description ?? match.code ?? match.id ?? "سجل"),
+    status: "active",
+  } as QrLink;
 }
 
 export async function recordQrScan(input: Omit<LocalRecord, "id" | "updatedAt">) {
